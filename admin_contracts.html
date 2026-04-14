@@ -251,7 +251,7 @@
   const authApp = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(authConfig);
   const contractApp = getApps().find(a => a.name === 'contractApp') || initializeApp(contractConfig, 'contractApp');
 
-  const auth = getAuth(authApp);
+  const auth = getAuth(contractApp);   // ← contractApp으로 변경
   const dbContract = getDatabase(contractApp);
 
   let contractData = [];

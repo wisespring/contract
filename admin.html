@@ -302,7 +302,7 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
   import { getDatabase, ref, get, update, remove, child } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
@@ -316,9 +316,22 @@
     databaseURL: "https://area-insight-default-rtdb.asia-southeast1.firebasedatabase.app"
   };
 
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
+
+  // 계약 전용 DB (별도 프로젝트)
+  const contractConfig = {
+    apiKey: "AIzaSyBLJ-sl1BVA0DsKIMm9Z773VLkjzuDnkcI",
+    authDomain: "contract-366e5.firebaseapp.com",
+    projectId: "contract-366e5",
+    storageBucket: "contract-366e5.firebasestorage.app",
+    messagingSenderId: "719137707347",
+    appId: "1:719137707347:web:95fdf2d8edb996f2f63da6",
+    databaseURL: "https://contract-366e5-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
+  const contractApp = getApps().find(a => a.name === 'contractApp') || initializeApp(contractConfig, 'contractApp');
+  const dbContract = getDatabase(contractApp);
 
   let allData = [];
   let currentFilter = 'all';
@@ -394,7 +407,6 @@
       if (snapshot.exists()) {
         const raw = snapshot.val();
         allData = Object.entries(raw).map(([id, data]) => ({ id, ...data }));
-        // 최신순 정렬
         allData.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
       } else {
         allData = [];
@@ -591,7 +603,7 @@
         panel.style.display = 'none';
       }
     });
-    if (tab === 'contracts' && contractData.length === 0) loadContracts();
+    if (tab === 'contracts') loadContracts();
   };
 
   // ── 계약 데이터 로드 ──
@@ -600,11 +612,14 @@
     document.getElementById('contractMessage').style.display = 'block';
     document.getElementById('contractTableBody').innerHTML = '';
     try {
-      const snap = await get(ref(db, 'contracts'));
+      const snap = await get(ref(dbContract, 'contracts'));
       contractData = [];
       if (snap.exists()) {
-        snap.forEach(child => contractData.push({ id: child.key, ...child.val() }));
+        snap.forEach(snapshot => contractData.push({ id: snapshot.key, ...snapshot.val() }));
+        console.log('[계약 로드] 총 건수:', contractData.length, contractData.map(d=>d.name));
         contractData.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+      } else {
+        console.log('[계약 로드] snap.exists() = false — DB 연결 또는 경로 문제');
       }
       updateContractStats();
       renderContracts();
@@ -704,6 +719,14 @@
         <textarea class="memo-textarea" id="memoText">${d.memo||''}</textarea>
         <button class="save-memo-btn" onclick="saveContractMemo()">메모 저장</button>
       </div>
+      <button class="delete-btn" onclick="showContractDeleteConfirm()">🗑 계약 삭제</button>
+      <div class="delete-confirm-bar" id="contractDeleteConfirmBar">
+        정말 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.
+        <div class="delete-confirm-actions">
+          <button class="delete-confirm-yes" onclick="deleteContractEntry()">삭제</button>
+          <button class="delete-confirm-no" onclick="hideContractDeleteConfirm()">취소</button>
+        </div>
+      </div>
     `;
     document.getElementById('modalOverlay').classList.add('open');
   };
@@ -711,7 +734,7 @@
   window.changeContractStatus = async (status) => {
     if (!currentDoc) return;
     try {
-      await update(ref(db, `contracts/${currentDoc.id}`), { status });
+      await update(ref(dbContract, `contracts/${currentDoc.id}`), { status });
       const idx = contractData.findIndex(x => x.id === currentDoc.id);
       if (idx >= 0) contractData[idx].status = status;
       updateContractStats();
@@ -725,11 +748,33 @@
     if (!currentDoc) return;
     const memo = document.getElementById('memoText').value;
     try {
-      await update(ref(db, `contracts/${currentDoc.id}`), { memo });
+      await update(ref(dbContract, `contracts/${currentDoc.id}`), { memo });
       const idx = contractData.findIndex(x => x.id === currentDoc.id);
       if (idx >= 0) contractData[idx].memo = memo;
       alert('메모가 저장되었습니다.');
     } catch (e) { alert('저장 실패: ' + e.message); }
+  };
+
+  window.showContractDeleteConfirm = () => {
+    const bar = document.getElementById('contractDeleteConfirmBar');
+    if (bar) bar.classList.add('show');
+  };
+
+  window.hideContractDeleteConfirm = () => {
+    const bar = document.getElementById('contractDeleteConfirmBar');
+    if (bar) bar.classList.remove('show');
+  };
+
+  window.deleteContractEntry = async () => {
+    if (!currentDoc) return;
+    try {
+      await remove(ref(dbContract, `contracts/${currentDoc.id}`));
+      contractData = contractData.filter(x => x.id !== currentDoc.id);
+      updateContractStats();
+      renderContracts();
+      closeModalDirect();
+      alert('계약이 삭제되었습니다.');
+    } catch (e) { alert('삭제 실패: ' + e.message); }
   };
 </script>
 </body>

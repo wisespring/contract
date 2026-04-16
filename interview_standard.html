@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상권분석 현장조사 — STANDARD</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410;
+    --paper: #f5f0e8;
+    --muted: #7a6e62;
+    --border: #c8bfb0;
+    --gold: #b8860b;
+    --accent: #c0392b;
+
+    /* 렌즈별 컬러 */
+    --lens-A: #2c3e6b;   /* 환경 — 네이비 */
+    --lens-A-bg: #dce3ef;
+    --lens-B: #1a5c3a;   /* 고객 — 그린 */
+    --lens-B-bg: #d4e8dc;
+    --lens-C: #6b2c2c;   /* 경쟁 — 레드브라운 */
+    --lens-C-bg: #ead4d4;
+    --lens-D: #4a3a6b;   /* 상품 — 퍼플 */
+    --lens-D-bg: #e0daea;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,160,120,0.07) 28px);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── 상단 진행바 ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--paper);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 40px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .topbar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); white-space: nowrap;
+  }
+  .topbar-track {
+    flex: 1; height: 4px;
+    background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+  .topbar-fill {
+    height: 100%; background: var(--ink);
+    border-radius: 2px; width: 0%; transition: width 0.3s ease;
+  }
+  .topbar-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--ink); font-weight: 500; white-space: nowrap;
+  }
+
+  /* ── 본문 래퍼 ── */
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 860px; margin: 0 auto;
+    padding: 56px 40px 100px;
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: end; gap: 24px;
+    border-bottom: 3px double var(--border);
+    padding-bottom: 32px; margin-bottom: 36px;
+  }
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .header-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 32px; font-weight: 700;
+    line-height: 1.2; letter-spacing: -0.02em;
+  }
+  .header-title em { color: var(--accent); font-style: normal; }
+  .header-desc {
+    margin-top: 10px; font-size: 12px;
+    color: var(--muted); line-height: 1.8;
+  }
+  .header-meta {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted); line-height: 2;
+    border-left: 1px solid var(--border); padding-left: 20px;
+  }
+  .header-meta strong {
+    display: block; font-size: 20px;
+    font-family: 'Noto Serif KR', serif;
+    color: var(--gold); line-height: 1.3; margin-bottom: 4px;
+  }
+
+  /* ── 정보 입력 바 ── */
+  .infobar {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); margin-bottom: 36px;
+  }
+  .info-cell { background: var(--paper); padding: 12px 14px; }
+  .info-cell-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+  }
+  .info-cell-value {
+    font-size: 12px; font-weight: 500; color: var(--ink);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px; min-height: 22px;
+  }
+
+  /* ── 버튼 ── */
+  .actions { display: flex; gap: 10px; margin-bottom: 44px; }
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 9px 18px; border: 1.5px solid var(--ink);
+    background: transparent; color: var(--ink);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+
+  /* ── 렌즈 섹션 ── */
+  .lens {
+    margin-bottom: 44px;
+    opacity: 0; transform: translateY(10px);
+    animation: fadeUp 0.4s ease forwards;
+  }
+  .lens:nth-child(1) { animation-delay: 0.05s; }
+  .lens:nth-child(2) { animation-delay: 0.12s; }
+  .lens:nth-child(3) { animation-delay: 0.19s; }
+  .lens:nth-child(4) { animation-delay: 0.26s; }
+
+  @keyframes fadeUp { to { opacity: 1; transform: none; } }
+
+  .lens-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px; margin-bottom: 0;
+    border-radius: 3px 3px 0 0;
+  }
+  .lA .lens-header { background: var(--lens-A-bg); border-left: 4px solid var(--lens-A); }
+  .lB .lens-header { background: var(--lens-B-bg); border-left: 4px solid var(--lens-B); }
+  .lC .lens-header { background: var(--lens-C-bg); border-left: 4px solid var(--lens-C); }
+  .lD .lens-header { background: var(--lens-D-bg); border-left: 4px solid var(--lens-D); }
+
+  .lens-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.1em; padding: 3px 9px;
+    border-radius: 2px; white-space: nowrap;
+  }
+  .lA .lens-badge { background: var(--lens-A); color: white; }
+  .lB .lens-badge { background: var(--lens-B); color: white; }
+  .lC .lens-badge { background: var(--lens-C); color: white; }
+  .lD .lens-badge { background: var(--lens-D); color: white; }
+
+  .lens-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 17px; font-weight: 700; flex: 1;
+  }
+  .lens-icon { font-size: 20px; }
+  .lens-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+  }
+
+  .lens-sub {
+    font-size: 11px; color: var(--muted);
+    padding: 8px 18px 12px;
+    border-left: 4px solid transparent;
+    font-style: italic;
+  }
+  .lA .lens-sub { border-left-color: var(--lens-A); background: rgba(44,62,107,0.03); }
+  .lB .lens-sub { border-left-color: var(--lens-B); background: rgba(26,92,58,0.03); }
+  .lC .lens-sub { border-left-color: var(--lens-C); background: rgba(107,44,44,0.03); }
+  .lD .lens-sub { border-left-color: var(--lens-D); background: rgba(74,58,107,0.03); }
+
+  /* ── 항목 ── */
+  .items {
+    border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 3px 3px;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: start; gap: 0;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s; cursor: pointer;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: rgba(180,160,120,0.06); }
+  .item.done { opacity: 0.5; }
+
+  .item-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    padding: 13px 0 13px 16px;
+    letter-spacing: 0.05em;
+  }
+
+  .item-check {
+    display: none; /* 숨기고 label로 제어 */
+  }
+
+  .item-label {
+    display: contents; cursor: pointer;
+  }
+
+  .item-checkbox {
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--border);
+    background: white; border-radius: 2px;
+    margin-top: 14px; flex-shrink: 0;
+    cursor: pointer; appearance: none; -webkit-appearance: none;
+    position: relative; transition: all 0.15s;
+    display: block;
+  }
+
+  .item-check:checked ~ .item-body { opacity: 0.45; text-decoration: none; }
+  .item-check:checked + .item-num + .item-body-wrap .item-checkbox {
+    background: var(--ink); border-color: var(--ink);
+  }
+  .item-check:checked + .item-num + .item-body-wrap .item-checkbox::after {
+    content: '✓';
+    position: absolute; top: -1px; left: 1px;
+    font-size: 11px; color: white; line-height: 1;
+  }
+
+  .item-body-wrap {
+    display: grid; grid-template-columns: 24px 1fr;
+    gap: 10px; align-items: start;
+    padding: 11px 0;
+  }
+
+  .item-body {
+    padding: 2px 0; transition: opacity 0.2s;
+  }
+
+  .item-text {
+    font-size: 13px; line-height: 1.65;
+    color: var(--ink); font-weight: 400;
+    display: block;
+  }
+
+  .item-hint {
+    font-size: 11px; color: var(--muted);
+    margin-top: 3px; display: block;
+    line-height: 1.5;
+  }
+
+  .item-note {
+    width: 110px; font-size: 11px;
+    border: none; border-bottom: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    text-align: right; outline: none;
+    padding: 2px 4px; margin: 13px 14px 0 0;
+    align-self: start;
+  }
+  .item-note::placeholder { color: #c8c0b4; }
+
+  /* 완료 시 스타일 */
+  .item.is-done .item-text { opacity: 0.4; }
+  .item.is-done .item-checkbox {
+    background: var(--ink) !important;
+    border-color: var(--ink) !important;
+  }
+  .item.is-done .item-checkbox::after {
+    content: '✓';
+    position: absolute; top: -1px; left: 1px;
+    font-size: 11px; color: white; line-height: 1;
+  }
+
+  /* ── 현장 특이점 메모 ── */
+  .memo-block {
+    margin-top: 44px;
+    border: 1px solid var(--border); background: white; padding: 22px;
+  }
+  .memo-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .memo-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .memo-ta {
+    width: 100%; min-height: 100px;
+    border: none; outline: none; resize: vertical;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px; line-height: 2.1; color: var(--ink);
+    font-weight: 300; background: transparent;
+    background-image: repeating-linear-gradient(transparent, transparent 33px, var(--border) 34px);
+  }
+  .memo-ta::placeholder { color: #c8c0b4; }
+
+  /* ── 푸터 ── */
+  .footer {
+    margin-top: 56px; padding-top: 18px;
+    border-top: 3px double var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-left {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.2em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .footer-right { font-size: 11px; color: var(--muted); }
+
+  /* ── 인쇄 ── */
+  @media print {
+    body::before { display: none; }
+    .topbar, .actions { display: none; }
+    .wrapper { padding: 20px; max-width: 100%; }
+    .lens { opacity: 1; transform: none; animation: none; }
+  }
+
+  @media (max-width: 600px) {
+    .wrapper { padding: 36px 18px 60px; }
+    .header { grid-template-columns: 1fr; }
+    .header-meta { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 14px; text-align: left; }
+    .infobar { grid-template-columns: repeat(2, 1fr); }
+    .topbar { padding: 10px 18px; }
+    .item-note { display: none; }
+    .lens-title { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 진행바 -->
+<div class="topbar">
+  <span class="topbar-label">진행률</span>
+  <div class="topbar-track"><div class="topbar-fill" id="progressFill"></div></div>
+  <span class="topbar-count" id="progressCount">0 / 0</span>
+</div>
+
+<div class="wrapper">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div>
+      <div class="header-eyebrow">Field Survey · Standard Edition · 현장조사 표준형</div>
+      <div class="header-title">상권분석 <em>현장조사</em><br>질의 목록</div>
+      <div class="header-desc">
+        4개 렌즈 · 환경 × 고객 × 경쟁 × 상품<br>
+        현장 순서는 상황에 따라 바뀌어도 됩니다 — 모든 항목은 녹음으로 기록됩니다
+      </div>
+    </div>
+    <div class="header-meta">
+      <strong>4개<br>렌즈</strong>
+      STANDARD<br>
+      작성일: <span id="today"></span><br>
+      조사자 A: ___________<br>
+      조사자 B: ___________
+    </div>
+  </div>
+
+  <!-- 정보 입력 -->
+  <div class="infobar">
+    <div class="info-cell">
+      <div class="info-cell-label">의뢰 업종</div>
+      <div class="info-cell-value"></div>
+    </div>
+    <div class="info-cell">
+      <div class="info-cell-label">조사 상권</div>
+      <div class="info-cell-value"></div>
+    </div>
+    <div class="info-cell">
+      <div class="info-cell-label">조사 일시</div>
+      <div class="info-cell-value"></div>
+    </div>
+    <div class="info-cell">
+      <div class="info-cell-label">날씨 / 특이사항</div>
+      <div class="info-cell-value"></div>
+    </div>
+  </div>
+
+  <!-- 버튼 -->
+  <div class="actions">
+    <button class="btn btn-primary" onclick="window.print()">▶ 인쇄 / Print</button>
+    <button class="btn" onclick="resetAll()">◻ 초기화</button>
+    <button class="btn" onclick="checkAll()">■ 전체선택</button>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       LENS A — 환경
+  ══════════════════════════════════════ -->
+  <div class="lens lA">
+    <div class="lens-header">
+      <span class="lens-icon">🗺️</span>
+      <span class="lens-badge">LENS A</span>
+      <span class="lens-title">환경 — 이 상권은 어떤 곳인가</span>
+      <span class="lens-count">7문항</span>
+    </div>
+    <div class="lens-sub">
+      발로 돌아다니며 눈으로 확인하는 항목. 두 명이 구역 나눠 동시에 체크해도 좋음.
+    </div>
+    <div class="items" id="items-A">
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A1</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A1">
+          <label for="A1" class="item-checkbox"></label>
+          <label for="A1" class="item-body">
+            <span class="item-text">도착했을 때 첫 느낌은? 상권이 살아있는가, 죽어있는가</span>
+            <span class="item-hint">활기·공기·유동 밀도 — 데이터보다 이 첫인상이 가장 솔직하다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A2</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A2">
+          <label for="A2" class="item-checkbox"></label>
+          <label for="A2" class="item-body">
+            <span class="item-text">사람들이 어디서 와서 어디로 가는가</span>
+            <span class="item-hint">보행 동선의 출발점과 목적지 — 이 흐름에 올라타야 살아남는다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A3</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A3">
+          <label for="A3" class="item-checkbox"></label>
+          <label for="A3" class="item-body">
+            <span class="item-text">상권을 먹여 살리는 핵심 시설이 무엇인가</span>
+            <span class="item-hint">대형마트, 병원, 학교, 공장, 오피스 등 — 이게 없어지면 상권도 죽는다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A4</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A4">
+          <label for="A4" class="item-checkbox"></label>
+          <label for="A4" class="item-body">
+            <span class="item-text">공실이 어디에, 얼마나 몰려 있는가</span>
+            <span class="item-hint">공실 밀집 구역은 상권 경계 또는 죽은 구역의 신호다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A5</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A5">
+          <label for="A5" class="item-checkbox"></label>
+          <label for="A5" class="item-body">
+            <span class="item-text">희망 입점 건물 안은 살아있는가</span>
+            <span class="item-hint">건물 내 공실 수, 최근 폐업 업종 — 상권이 살아도 건물이 죽어있을 수 있다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A6</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A6">
+          <label for="A6" class="item-checkbox"></label>
+          <label for="A6" class="item-body">
+            <span class="item-text">희망 위치는 보행 동선에서 자연스럽게 눈에 들어오는가</span>
+            <span class="item-hint">가시성·노출도·코너 여부 — 찾아가야 하는 자리는 초보에게 위험하다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="A">
+        <span class="item-num">A7</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="A7">
+          <label for="A7" class="item-checkbox"></label>
+          <label for="A7" class="item-body">
+            <span class="item-text">야간에도 상권이 살아있는가, 낮에만 도는 상권인가</span>
+            <span class="item-hint">업종에 따라 야간 상권 여부가 생존을 가른다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       LENS B — 고객
+  ══════════════════════════════════════ -->
+  <div class="lens lB">
+    <div class="lens-header">
+      <span class="lens-icon">👥</span>
+      <span class="lens-badge">LENS B</span>
+      <span class="lens-title">고객 — 여기 사람들은 어떻게 소비하는가</span>
+      <span class="lens-count">8문항</span>
+    </div>
+    <div class="lens-sub">
+      카페·식당 등 현지인이 모이는 곳에서 자연스러운 대화로 캐내는 항목.
+    </div>
+    <div class="items" id="items-B">
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B1</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B1">
+          <label for="B1" class="item-checkbox"></label>
+          <label for="B1" class="item-body">
+            <span class="item-text">여기 사람들은 주로 누구인가 — 직장인인가, 거주민인가, 유동객인가</span>
+            <span class="item-hint">소비 패턴의 뿌리가 여기서 결정된다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B2</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B2">
+          <label for="B2" class="item-checkbox"></label>
+          <label for="B2" class="item-body">
+            <span class="item-text">이 동네 사람들이 지갑을 여는 이유가 무엇인가</span>
+            <span class="item-hint">편리함인가, 가성비인가, 분위기인가 — 소비 동기가 업종 선택의 기준이 된다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B3</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B3">
+          <label for="B3" class="item-checkbox"></label>
+          <label for="B3" class="item-body">
+            <span class="item-text">새 가게가 생기면 어떻게 알게 되는가 — 직접 가보는가, 주변에 먼저 묻는가</span>
+            <span class="item-hint">구전이 강한 상권은 오픈 첫 달이 전부다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B4</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B4">
+          <label for="B4" class="item-checkbox"></label>
+          <label for="B4" class="item-body">
+            <span class="item-text">주말과 평일이 완전히 다른 상권인가, 비슷한 상권인가</span>
+            <span class="item-hint">주말 죽는 상권에서 주 6일 장사 계획은 처음부터 어긋난다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B5</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B5">
+          <label for="B5" class="item-checkbox"></label>
+          <label for="B5" class="item-body">
+            <span class="item-text">이 동네 사람들이 의뢰 업종을 얼마나 자주 이용하는가</span>
+            <span class="item-hint">월 1회 이하 특별 소비인가, 주 2~3회 일상 소비인가 — 이게 매출 구조를 결정한다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B6</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B6">
+          <label for="B6" class="item-checkbox"></label>
+          <label for="B6" class="item-body">
+            <span class="item-text">이 상권에서 손님들이 기꺼이 내는 한 끼(또는 한 번 이용) 금액대는</span>
+            <span class="item-hint">여기서 벗어난 가격은 어느 방향이든 리스크다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B7</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B7">
+          <label for="B7" class="item-checkbox"></label>
+          <label for="B7" class="item-body">
+            <span class="item-text">이 상권 소비자들이 지금 아쉬워하는 것이 있는가 — 없어서 불편한 업종이나 서비스</span>
+            <span class="item-hint">이게 바로 공백 업종 힌트다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="B">
+        <span class="item-num">B8</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="B8">
+          <label for="B8" class="item-checkbox"></label>
+          <label for="B8" class="item-body">
+            <span class="item-text">이 상권 소비자들이 절대 안 가는 유형의 가게가 있는가 — 이유는</span>
+            <span class="item-hint">가지 않는 이유 속에 이 상권의 소비 기준이 숨어있다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       LENS C — 경쟁
+  ══════════════════════════════════════ -->
+  <div class="lens lC">
+    <div class="lens-header">
+      <span class="lens-icon">🔍</span>
+      <span class="lens-badge">LENS C</span>
+      <span class="lens-title">경쟁 — 잘 되는 집과 망하는 집은 왜 갈리는가</span>
+      <span class="lens-count">9문항</span>
+    </div>
+    <div class="lens-sub">
+      경쟁 점포 직접 방문(미스터리 쇼핑) + 폐업 점포 관찰로 채우는 항목.
+    </div>
+    <div class="items" id="items-C">
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C1</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C1">
+          <label for="C1" class="item-checkbox"></label>
+          <label for="C1" class="item-body">
+            <span class="item-text">이 상권에서 제일 잘 되는 가게는 어디인가 — 왜 잘 되는가</span>
+            <span class="item-hint">상권이 살아있는 곳에서 잘 되는 집이 있다면 그 이유가 답이다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C2</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C2">
+          <label for="C2" class="item-checkbox"></label>
+          <label for="C2" class="item-body">
+            <span class="item-text">잘 되는 집과 안 되는 집의 차이가 입지인가, 운영인가, 사람인가</span>
+            <span class="item-hint">같은 상권, 같은 업종인데 결과가 다르다면 — 그 이유가 핵심 진단 포인트다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C3</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C3">
+          <label for="C3" class="item-checkbox"></label>
+          <label for="C3" class="item-body">
+            <span class="item-text">미스터리 쇼핑 — 들어갔을 때 가격이 밖에서 보였는가</span>
+            <span class="item-hint">메뉴판·가격표 공개 여부. 숨긴 가게는 소비자 신뢰를 처음부터 잃는다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C4</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C4">
+          <label for="C4" class="item-checkbox"></label>
+          <label for="C4" class="item-body">
+            <span class="item-text">미스터리 쇼핑 — 계산서에 예상 못한 추가 비용이 있었는가</span>
+            <span class="item-hint">테이블차지·반찬비·최소주문 강요 등 — 한 번 뒤통수 맞은 손님은 안 돌아온다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C5</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C5">
+          <label for="C5" class="item-checkbox"></label>
+          <label for="C5" class="item-body">
+            <span class="item-text">미스터리 쇼핑 — 공지된 영업시간에 실제로 열려있었는가</span>
+            <span class="item-hint">약속을 어기는 가게는 단골을 경쟁자에게 넘긴다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C6</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C6">
+          <label for="C6" class="item-checkbox"></label>
+          <label for="C6" class="item-body">
+            <span class="item-text">폐업 점포가 많이 몰린 자리가 있는가 — 자리 문제인가, 업종 문제인가</span>
+            <span class="item-hint">업종 바꿔도 계속 폐업하는 자리는 입지 자체가 죽은 자리다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C7</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C7">
+          <label for="C7" class="item-checkbox"></label>
+          <label for="C7" class="item-body">
+            <span class="item-text">의뢰 업종의 경쟁 점포는 몇 개이며, 이미 포화 상태인가</span>
+            <span class="item-hint">포화 상태라면 "더 싸고 더 좋아야만" 이길 수 있다 — 그게 가능한가</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C8</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C8">
+          <label for="C8" class="item-checkbox"></label>
+          <label for="C8" class="item-body">
+            <span class="item-text">이 상권에서 오래 버티고 있는 점포의 공통점이 무엇인가</span>
+            <span class="item-hint">생존자에게서 배우는 게 가장 빠른 공부다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="C">
+        <span class="item-num">C9</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="C9">
+          <label for="C9" class="item-checkbox"></label>
+          <label for="C9" class="item-body">
+            <span class="item-text">임대료 수준이 이 상권 매출 포텐셜 대비 적정한가</span>
+            <span class="item-hint">좋은 자리가 반드시 좋은 장사를 보장하지 않는다 — 고정비가 발목을 잡는다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       LENS D — 상품
+  ══════════════════════════════════════ -->
+  <div class="lens lD">
+    <div class="lens-header">
+      <span class="lens-icon">🎯</span>
+      <span class="lens-badge">LENS D</span>
+      <span class="lens-title">상품 — 이 업종이 이 상권에서 팔리는가</span>
+      <span class="lens-count">8문항</span>
+    </div>
+    <div class="lens-sub">
+      조사 마무리 단계에서 전문가가 하루를 종합해 답하는 핵심 인터뷰 항목. 이 답이 보고서의 결론이 된다.
+    </div>
+    <div class="items" id="items-D">
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D1</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D1">
+          <label for="D1" class="item-checkbox"></label>
+          <label for="D1" class="item-body">
+            <span class="item-text">이 상권을 한 문장으로 정의한다면</span>
+            <span class="item-hint">전문가의 직관적 한 줄 요약 — 복잡한 분석보다 이게 더 정확할 때가 많다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D2</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D2">
+          <label for="D2" class="item-checkbox"></label>
+          <label for="D2" class="item-body">
+            <span class="item-text">의뢰 업종이 이 상권 소비자에게 '일상 소비'인가, '특별 소비'인가</span>
+            <span class="item-hint">월 1회 이하 특별 소비면 아무리 좋은 자리여도 매출 한계가 있다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D3</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D3">
+          <label for="D3" class="item-checkbox"></label>
+          <label for="D3" class="item-body">
+            <span class="item-text">의뢰 업종과 비슷해 보이지만 실제로는 전혀 다른 소비 카테고리가 있는가</span>
+            <span class="item-hint">고깃집이 잘 된다고 돈가스도 잘 될 거라는 착각 — 이걸 짚어줘야 한다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D4</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D4">
+          <label for="D4" class="item-checkbox"></label>
+          <label for="D4" class="item-body">
+            <span class="item-text">이 상권에서 의뢰 업종이 성공하려면 반드시 갖춰야 할 조건 3가지는</span>
+            <span class="item-hint">입지·운영·상품 각각에서 하나씩 뽑아내면 가장 명확하다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D5</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D5">
+          <label for="D5" class="item-checkbox"></label>
+          <label for="D5" class="item-body">
+            <span class="item-text">오픈 첫 달에 절대 하면 안 되는 것은 무엇인가</span>
+            <span class="item-hint">이 상권 특성상 첫 달 실수가 회복 불가능한 경우가 있다 — 구체적으로 짚어라</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D6</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D6">
+          <label for="D6" class="item-checkbox"></label>
+          <label for="D6" class="item-body">
+            <span class="item-text">오늘 현장에서 예상과 가장 달랐던 점은 무엇인가</span>
+            <span class="item-hint">데이터와 현장이 다를 때 — 현장이 맞다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D7</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D7">
+          <label for="D7" class="item-checkbox"></label>
+          <label for="D7" class="item-body">
+            <span class="item-text">만약 본인이 여기서 창업한다면 어떤 업종을, 어느 위치에서 하겠는가</span>
+            <span class="item-hint">전문가의 솔직한 답 — 이게 보고서에서 가장 강력한 한 줄이 된다</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+      <div class="item" data-lens="D">
+        <span class="item-num">D8</span>
+        <div class="item-body-wrap">
+          <input type="checkbox" class="item-check" id="D8">
+          <label for="D8" class="item-checkbox"></label>
+          <label for="D8" class="item-body">
+            <span class="item-text">의뢰인에게 최종적으로 한마디 한다면</span>
+            <span class="item-hint">들어가라 / 조건부 들어가라 / 들어가지 마라 — 이유와 함께</span>
+          </label>
+        </div>
+        <input type="text" class="item-note" placeholder="메모">
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- 현장 특이점 메모 -->
+  <div class="memo-block">
+    <div class="memo-label">현장 특이점 · 추가 메모 / Field Notes</div>
+    <textarea class="memo-ta" placeholder="이 상권만의 특이한 패턴, 예상 밖의 발견, 추가로 확인이 필요한 것들을 자유롭게 기록하세요..."></textarea>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">Commercial Area Analysis · Standard Edition · Ver. 1.0</div>
+    <div class="footer-right">총 <strong id="totalCount">0</strong>개 항목</div>
+  </div>
+
+</div><!-- /wrapper -->
+
+<script>
+  // 날짜
+  const t = new Date();
+  document.getElementById('today').textContent =
+    `${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`;
+
+  // 체크박스 동작
+  const checks = document.querySelectorAll('.item-check');
+  document.getElementById('totalCount').textContent = checks.length;
+  document.getElementById('progressCount').textContent = `0 / ${checks.length}`;
+
+  function updateProgress() {
+    const done = document.querySelectorAll('.item-check:checked').length;
+    const total = checks.length;
+    document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+    document.getElementById('progressCount').textContent = `${done} / ${total}`;
+
+    // 완료 항목 시각 처리
+    checks.forEach(cb => {
+      const item = cb.closest('.item');
+      if (item) item.classList.toggle('is-done', cb.checked);
+    });
+  }
+
+  checks.forEach(cb => cb.addEventListener('change', updateProgress));
+
+  function resetAll() {
+    if (!confirm('모든 체크를 초기화하시겠습니까?')) return;
+    checks.forEach(cb => cb.checked = false);
+    document.querySelectorAll('.item-note').forEach(n => n.value = '');
+    document.querySelectorAll('.item').forEach(i => i.classList.remove('is-done'));
+    updateProgress();
+  }
+
+  function checkAll() {
+    checks.forEach(cb => cb.checked = true);
+    document.querySelectorAll('.item').forEach(i => i.classList.add('is-done'));
+    updateProgress();
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>

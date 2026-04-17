@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상권분석 프롬프트 생성기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2128;
+    --surface3: #12141a;
+    --border: #2a2d36;
+    --border2: #363a46;
+    --accent: #c8a96e;
+    --accent-b: #7eb8a4;
+    --accent-c: #9b8ec4;
+    --text: #e8e4dc;
+    --text-muted: #7a7d88;
+    --text-dim: #3e424f;
+    --green: #6fcf97;
+    --red: #e07070;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 200;
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo svg { width: 16px; height: 16px; }
+
+  .header-text h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 17px; font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-text p {
+    font-size: 14px; color: var(--text-muted);
+    margin-top: 2px; letter-spacing: 0.3px;
+  }
+
+  .header-pills {
+    margin-left: auto;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .pill {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; letter-spacing: 1.5px;
+    border: 1px solid var(--border);
+    padding: 4px 10px; color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    min-height: calc(100vh - 73px);
+  }
+
+  /* ── Left Panel ── */
+  .left-panel {
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .panel-section {
+    border-bottom: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .panel-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; letter-spacing: 2px;
+    color: var(--text-dim); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* Grade Tabs */
+  .grade-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .grade-tab {
+    padding: 14px 10px;
+    cursor: pointer;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    transition: background 0.15s;
+    position: relative;
+  }
+  .grade-tab:last-child { border-right: none; }
+
+  .grade-tab:hover { background: var(--surface2); }
+
+  .grade-tab.active { background: var(--surface2); }
+  .grade-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .grade-tab.active[data-grade="A"]::after { background: var(--accent); }
+  .grade-tab.active[data-grade="B"]::after { background: var(--accent-b); }
+  .grade-tab.active[data-grade="C"]::after { background: var(--accent-c); }
+
+  .tab-grade {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px; font-weight: 600;
+    display: block; margin-bottom: 4px;
+  }
+  [data-grade="A"] .tab-grade { color: var(--accent); }
+  [data-grade="B"] .tab-grade { color: var(--accent-b); }
+  [data-grade="C"] .tab-grade { color: var(--accent-c); }
+
+  .tab-label {
+    font-size: 14px; color: var(--text-muted); line-height: 1.4;
+    display: block;
+  }
+  .tab-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; color: var(--text-dim);
+    display: block; margin-top: 5px;
+  }
+  .grade-tab.active .tab-price { color: var(--text-muted); }
+
+  /* Grade detail */
+  .grade-detail {
+    padding: 14px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    margin-top: 12px;
+  }
+  .grade-detail-title {
+    font-size: 14px; font-weight: 700;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .grade-detail-tags {
+    display: flex; flex-wrap: wrap; gap: 5px;
+  }
+  .detail-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; padding: 2px 7px;
+    border: 1px solid var(--border);
+    color: var(--text-muted); letter-spacing: 0.3px;
+  }
+  .detail-tag.on-a { border-color: var(--accent); color: var(--accent); opacity: 0.8; }
+  .detail-tag.on-b { border-color: var(--accent-b); color: var(--accent-b); opacity: 0.8; }
+  .detail-tag.on-c { border-color: var(--accent-c); color: var(--accent-c); opacity: 0.8; }
+
+  /* Form Fields */
+  .field-group { display: flex; flex-direction: column; gap: 10px; }
+
+  .field {
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .field label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; letter-spacing: 1.5px;
+    color: var(--text-muted); text-transform: uppercase;
+  }
+  .field input,
+  .field textarea,
+  .field select {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field input:focus,
+  .field textarea:focus { border-color: var(--border2); }
+  .field input::placeholder,
+  .field textarea::placeholder { color: var(--text-dim); font-size: 14px; }
+  .field textarea { resize: vertical; min-height: 58px; line-height: 1.6; }
+  .field select option { background: var(--surface3); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Generate Button */
+  .btn-wrap { padding: 20px 24px; }
+
+  .btn-generate {
+    width: 100%;
+    padding: 15px;
+    border: none; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    transition: filter 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .btn-generate:hover { filter: brightness(1.1); }
+
+  .btn-generate[data-grade="A"] { background: var(--accent); color: #0e0f11; }
+  .btn-generate[data-grade="B"] { background: var(--accent-b); color: #0e0f11; }
+  .btn-generate[data-grade="C"] { background: var(--accent-c); color: #fff; }
+
+  /* ── Right Panel ── */
+  .right-panel {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Empty State */
+  .empty-state {
+    flex: 1; display: flex;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; color: var(--text-dim);
+    padding: 40px;
+    text-align: center;
+  }
+  .empty-state svg { opacity: 0.3; }
+  .empty-state h3 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px; color: var(--text-dim);
+  }
+  .empty-state p { font-size: 15px; line-height: 1.8; }
+
+  /* Result Area */
+  .result-area {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Result Top Bar */
+  .result-topbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .result-grade-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; padding: 3px 10px;
+    border: 1px solid; letter-spacing: 1px;
+  }
+  .rgb-a { border-color: var(--accent); color: var(--accent); }
+  .rgb-b { border-color: var(--accent-b); color: var(--accent-b); }
+  .rgb-c { border-color: var(--accent-c); color: var(--accent-c); }
+
+  .result-meta {
+    font-size: 14px; color: var(--text-muted);
+  }
+  .result-meta strong { color: var(--text); }
+
+  .result-actions {
+    margin-left: auto;
+    display: flex; gap: 8px;
+  }
+
+  .btn-action {
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    text-transform: uppercase;
+  }
+  .btn-action:hover { border-color: var(--border2); color: var(--text); }
+  .btn-action.copied { border-color: var(--green); color: var(--green); }
+
+  /* Tabs */
+  .result-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .result-tab {
+    padding: 10px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; letter-spacing: 1px;
+    color: var(--text-dim); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase; transition: all 0.15s;
+  }
+  .result-tab:hover { color: var(--text-muted); }
+  .result-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* Code Output */
+  .code-wrap {
+    flex: 1; overflow-y: auto;
+    padding: 0;
+    background: var(--surface3);
+  }
+
+  .code-block {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px; line-height: 2;
+    color: #c4c0b8;
+    padding: 28px 32px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 2;
+    min-height: 100%;
+  }
+
+  /* Syntax highlighting */
+  .tok-header { color: var(--accent); font-weight: 600; }
+  .tok-bracket { color: #7eb8a4; }
+  .tok-key { color: #a8c4e0; }
+  .tok-val { color: #e8e4dc; }
+  .tok-comment { color: var(--text-dim); font-style: italic; }
+  .tok-section { color: #c8a96e; font-weight: 600; }
+  .tok-number { color: #9b8ec4; }
+  .tok-check { color: var(--green); }
+
+  /* Info Tab */
+  .info-wrap {
+    flex: 1; overflow-y: auto;
+    padding: 28px 32px;
+  }
+  .info-section { margin-bottom: 28px; }
+  .info-section h3 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .info-step {
+    display: flex; gap: 14px; margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 24px; height: 24px;
+    border: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-text {
+    font-size: 15px; color: #c4c0b8; line-height: 1.7;
+  }
+  .step-text strong { color: var(--text); }
+
+  .info-compare {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+    margin-top: 10px;
+  }
+  .compare-card {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    padding: 14px;
+  }
+  .compare-card .cc-grade {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px; font-weight: 600;
+    margin-bottom: 6px; display: block;
+  }
+  .compare-card.ca .cc-grade { color: var(--accent); }
+  .compare-card.cb .cc-grade { color: var(--accent-b); }
+  .compare-card.cc .cc-grade { color: var(--accent-c); }
+  .compare-card ul {
+    padding-left: 14px; font-size: 14px;
+    color: var(--text-muted); line-height: 1.8;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    header { padding: 18px 20px; }
+    .layout { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+    .right-panel { min-height: 500px; }
+    .info-compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+      <path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>상권분석 프롬프트 생성기</h1>
+    <p>A · B · C 등급별 맞춤 프롬프트 코드 생성 → Claude 대화창에 바로 붙여넣기</p>
+  </div>
+  <div class="header-pills">
+    <span class="pill">2026 v2</span>
+    <span class="pill">prompt builder</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── LEFT ── -->
+  <div class="left-panel">
+
+    <!-- Grade -->
+    <div class="panel-section">
+      <div class="panel-label">// 01. 보고서 등급 선택</div>
+      <div class="grade-tabs">
+        <div class="grade-tab active" data-grade="A" onclick="selectGrade('A')">
+          <span class="tab-grade">A급</span>
+          <span class="tab-label">종합 전략형</span>
+          <span class="tab-price">100~300만/일</span>
+        </div>
+        <div class="grade-tab" data-grade="B" onclick="selectGrade('B')">
+          <span class="tab-grade">B급</span>
+          <span class="tab-label">실무 데이터형</span>
+          <span class="tab-price">50~80만/일</span>
+        </div>
+        <div class="grade-tab" data-grade="C" onclick="selectGrade('C')">
+          <span class="tab-grade">C급</span>
+          <span class="tab-label">기초 체크형</span>
+          <span class="tab-price">30~50만/일</span>
+        </div>
+      </div>
+
+      <div class="grade-detail" id="grade-detail">
+        <div class="grade-detail-title" id="grade-detail-title">A급 · 종합 전략형 보고서</div>
+        <div class="grade-detail-tags" id="grade-detail-tags"></div>
+      </div>
+    </div>
+
+    <!-- Fields -->
+    <div class="panel-section" style="flex:1">
+      <div class="panel-label">// 02. 분석 정보 입력</div>
+      <div class="field-group">
+
+        <div class="field-row">
+          <div class="field">
+            <label>업종 / 아이템</label>
+            <input type="text" id="f-biz" placeholder="예: 한식 고기집" />
+          </div>
+          <div class="field">
+            <label>희망 지역</label>
+            <input type="text" id="f-loc" placeholder="예: 서울 마포구 합정동" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>예상 창업비용</label>
+            <input type="text" id="f-budget" placeholder="예: 1억 5천만원" />
+          </div>
+          <div class="field">
+            <label>임대 규모</label>
+            <input type="text" id="f-size" placeholder="예: 20평 / 월세 250" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>타겟 고객</label>
+            <input type="text" id="f-target" placeholder="예: 30대 직장인" />
+          </div>
+          <div class="field">
+            <label>차별화 포인트</label>
+            <input type="text" id="f-adv" placeholder="예: 특허 레시피" />
+          </div>
+        </div>
+
+        <div class="field" id="field-extra-a">
+          <label>예상 메뉴 객단가</label>
+          <input type="text" id="f-price" placeholder="예: 1인 15,000~20,000원" />
+        </div>
+
+        <div class="field" id="field-extra-b">
+          <label>현 임대차 상태</label>
+          <input type="text" id="f-lease" placeholder="예: 권리금 3천 포함, 기존 음식점 자리" />
+        </div>
+
+        <div class="field">
+          <label>추가 요청 / 특이사항</label>
+          <textarea id="f-extra" placeholder="예: 주변에 동일 업종 3개 있음. 학원가 인접. 주말 집중 상권."></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Button -->
+    <div class="btn-wrap">
+      <button class="btn-generate" data-grade="A" id="btn-gen" onclick="generatePrompt()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        A급 프롬프트 생성
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT ── -->
+  <div class="right-panel">
+
+    <!-- Empty -->
+    <div class="empty-state" id="empty-state">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      <h3>프롬프트 코드가 여기에 표시됩니다</h3>
+      <p>왼쪽에서 등급을 선택하고<br>분석 정보를 입력한 후<br>프롬프트 생성 버튼을 눌러주세요.</p>
+    </div>
+
+    <!-- Result -->
+    <div class="result-area" id="result-area" style="display:none">
+
+      <div class="result-topbar">
+        <span class="result-grade-badge rgb-a" id="r-badge">A급 종합전략형</span>
+        <span class="result-meta" id="r-meta"><strong></strong></span>
+        <div class="result-actions">
+          <button class="btn-action" id="btn-copy" onclick="copyPrompt()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            복사
+          </button>
+          <button class="btn-action" onclick="resetAll()">초기화</button>
+        </div>
+      </div>
+
+      <div class="result-tabs">
+        <div class="result-tab active" onclick="switchTab('code')">프롬프트 코드</div>
+        <div class="result-tab" onclick="switchTab('info')">사용 가이드</div>
+      </div>
+
+      <div class="code-wrap" id="tab-code">
+        <div class="code-block" id="code-output"></div>
+      </div>
+
+      <div class="info-wrap" id="tab-info" style="display:none">
+        <div class="info-section">
+          <h3>Claude 대화창 사용 방법</h3>
+          <div class="info-step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>"프롬프트 코드" 탭의 내용을 전체 복사</strong>하세요. 우상단 <strong>[복사]</strong> 버튼을 누르면 클립보드에 자동 복사됩니다.</div>
+          </div>
+          <div class="info-step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>claude.ai</strong> 또는 Claude 앱의 <strong>새 대화창</strong>을 열고, 복사한 내용을 <strong>그대로 붙여넣기(Ctrl+V)</strong>합니다.</div>
+          </div>
+          <div class="info-step">
+            <div class="step-num">3</div>
+            <div class="step-text">전송 후 Claude가 <strong>입력한 정보 기반의 상권분석 보고서</strong>를 작성합니다. 추가 질문이나 특정 섹션 보완을 이어서 요청할 수 있습니다.</div>
+          </div>
+          <div class="info-step">
+            <div class="step-num">4</div>
+            <div class="step-text">더 정밀한 분석이 필요하면 <strong>"3번 섹션 손익 시뮬레이션을 더 자세히 해줘"</strong> 처럼 보완 요청을 이어가세요.</div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3>등급별 보고서 비교</h3>
+          <div class="info-compare">
+            <div class="compare-card ca">
+              <span class="cc-grade">A급</span>
+              <ul>
+                <li>8개 섹션 종합 분석</li>
+                <li>리스크 시나리오 포함</li>
+                <li>마케팅 전략 포함</li>
+                <li>계약 특약 권고</li>
+                <li>전문가 최종 의견</li>
+              </ul>
+            </div>
+            <div class="compare-card cb">
+              <span class="cc-grade">B급</span>
+              <ul>
+                <li>6개 핵심 섹션</li>
+                <li>데이터 출처 명시</li>
+                <li>손익분기 시뮬</li>
+                <li>임대료 적정성</li>
+                <li>창업 추천 지수</li>
+              </ul>
+            </div>
+            <div class="compare-card cc">
+              <span class="cc-grade">C급</span>
+              <ul>
+                <li>체크리스트 형식</li>
+                <li>초보자 눈높이</li>
+                <li>무료 툴 안내</li>
+                <li>간이 손익 계산</li>
+                <li>한 줄 최종 결론</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3>활용 팁</h3>
+          <div class="info-step">
+            <div class="step-num">💡</div>
+            <div class="step-text">입력 정보가 구체적일수록 보고서 품질이 높아집니다. 특히 <strong>창업비용, 임대 조건, 타겟 객단가</strong>는 손익분기 계산의 핵심입니다.</div>
+          </div>
+          <div class="info-step">
+            <div class="step-num">💡</div>
+            <div class="step-text">같은 정보로 A/B/C 3가지 프롬프트를 모두 생성해 비교해보면 각 등급이 어떤 분석에 집중하는지 파악할 수 있습니다.</div>
+          </div>
+          <div class="info-step">
+            <div class="step-num">💡</div>
+            <div class="step-text">Claude Projects 기능을 활용하면 같은 프로젝트 안에서 여러 지역/업종을 비교 분석하는 연속 대화가 가능합니다.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let currentGrade = 'A';
+let generatedPrompt = '';
+
+const gradeInfo = {
+  A: {
+    label: 'A급 · 종합 전략형 보고서',
+    tags: ['유동인구분석','경쟁사매출','손익시뮬레이션','마케팅전략','리스크대응','계약특약','전문가의견'],
+    cls: 'on-a',
+    badgeCls: 'rgb-a',
+    badgeLabel: 'A급 · 종합전략형',
+    btnLabel: 'A급 프롬프트 생성'
+  },
+  B: {
+    label: 'B급 · 실무 데이터형 보고서',
+    tags: ['유동인구','경쟁분석','임대료적정성','손익분기','포화도지수','창업추천지수'],
+    cls: 'on-b',
+    badgeCls: 'rgb-b',
+    badgeLabel: 'B급 · 실무데이터형',
+    btnLabel: 'B급 프롬프트 생성'
+  },
+  C: {
+    label: 'C급 · 기초 체크형 보고서',
+    tags: ['입지체크리스트','업종적합성','간이손익','주의사항5가지','무료툴안내','한줄결론'],
+    cls: 'on-c',
+    badgeCls: 'rgb-c',
+    badgeLabel: 'C급 · 기초체크형',
+    btnLabel: 'C급 프롬프트 생성'
+  }
+};
+
+function selectGrade(g) {
+  currentGrade = g;
+  document.querySelectorAll('.grade-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.grade-tab[data-grade="${g}"]`).classList.add('active');
+
+  const info = gradeInfo[g];
+  document.getElementById('grade-detail-title').textContent = info.label;
+  const tagsEl = document.getElementById('grade-detail-tags');
+  tagsEl.innerHTML = info.tags.map(t => `<span class="detail-tag ${info.cls}">${t}</span>`).join('');
+
+  const btn = document.getElementById('btn-gen');
+  btn.setAttribute('data-grade', g);
+  btn.textContent = '';
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> ${info.btnLabel}`;
+}
+
+// Init grade detail
+selectGrade('A');
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function buildPrompt() {
+  const biz    = getVal('f-biz')    || '(미입력)';
+  const loc    = getVal('f-loc')    || '(미입력)';
+  const budget = getVal('f-budget') || '(미입력)';
+  const size   = getVal('f-size')   || '(미입력)';
+  const target = getVal('f-target') || '(미입력)';
+  const adv    = getVal('f-adv')    || '(미입력)';
+  const price  = getVal('f-price')  || '(미입력)';
+  const lease  = getVal('f-lease')  || '(미입력)';
+  const extra  = getVal('f-extra');
+
+  const infoBlock = `[분석 대상 정보]
+업종/아이템    : ${biz}
+희망 지역      : ${loc}
+예상 창업비용  : ${budget}
+임대 규모      : ${size}
+타겟 고객      : ${target}
+차별화 포인트  : ${adv}
+예상 객단가    : ${price}
+임대차 현황    : ${lease}${extra ? `\n추가 조건      : ${extra}` : ''}`;
+
+  const htmlFormatBlock = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[출력 형식 — 반드시 아래 규칙을 따를 것]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+보고서 전체를 완전한 HTML 파일로 출력하세요.
+<!DOCTYPE html> 부터 </html> 까지 전체 코드를 작성해야 합니다.
+
+▶ HTML 구조 요구사항:
+• <head>에 Google Fonts(Noto Sans KR, Noto Serif KR) 임포트
+• 모든 CSS는 <style> 태그 내 인라인으로 작성 (외부 파일 없음)
+• 반응형: max-width 960px, 중앙 정렬, 좌우 padding 32px
+
+▶ 보고서 헤더 디자인:
+• 상단에 등급 배지(GRADE A / B / C), 보고서 제목, 업종·지역·작성일 표시
+• 헤더 배경: 등급별 포인트 컬러 사용 (A급: #1a1a2e 배경 + #c8a96e 강조 / B급: #0f2027 배경 + #7eb8a4 강조 / C급: #1a0a2e 배경 + #9b8ec4 강조)
+
+▶ 섹션 디자인:
+• 각 섹션은 흰색 카드(border-radius: 12px, box-shadow 적용)
+• 섹션 번호와 제목은 굵은 serif 폰트, 포인트 컬러 강조선
+• 표(table)는 헤더 배경색, 줄무늬(zebra) 적용
+• 수치·핵심 데이터는 하이라이트 박스로 강조
+• 판정/등급 뱃지: ✅ 녹색 / ⚠️ 주황색 / ❌ 빨간색 색상 박스
+
+▶ 데이터 출처 표기 (필수):
+• 각 수치·통계 바로 뒤에 [출처: 기관명, 연도] 형식으로 반드시 명시
+• 보고서 말미에 "참고 데이터 출처" 섹션 별도 구성
+• 추정치는 반드시 "(추정)" 또는 "(예측)" 표기
+• 실제 확인 불가 데이터는 "현장 실사 필요" 명시
+
+▶ 푸터:
+• 작성일, 데이터 기준일, 면책 조항, 현장 검증 권고 문구 포함`;
+
+  const prompts = {
+
+A: `당신은 대형 프랜차이즈 입지 전략 출신의 A급 상권분석 전문가입니다.
+아래 창업 정보를 바탕으로 브랜드 컨설팅 수준의 종합 상권분석 보고서를 작성하세요.
+
+${infoBlock}
+${htmlFormatBlock}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[보고서 구성 — 아래 8개 섹션을 HTML로 작성]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 섹션 1. 상권 개요 및 입지 총평
+- 상권 유형 분류 (역세권 / 주거 / 오피스 / 복합 등)
+- 상권 생애주기 단계 (성장 / 안정 / 쇠퇴) + 판단 근거
+- 핵심 강점 3가지 + 핵심 리스크 3가지 → HTML 표로 작성
+- [출처: 소상공인시장진흥공단 상권분석 보고서 2024, 통계청 기업생멸행정통계 2023]
+
+## 섹션 2. 유동인구 심층 분석
+- 추정 일평균 유효 유동인구 (타겟 연령대 필터 기준, 추정값 명시)
+- 피크 타임대 분석 (평일 / 주말 구분) → 시각적 시간대 바 표현
+- 배후 주거인구 및 직장인구 구성 비율 추정
+- [출처: 소상공인365 상권정보시스템(sg.sbiz.or.kr), SKT 지오비전 통신 빅데이터, 행정안전부 주민등록 인구통계 2024]
+
+## 섹션 3. 경쟁 환경 분석
+- 반경 300m / 500m 내 동일 업종 경쟁점 수 및 추정 월 매출 밴드 → 표
+- 직접경쟁 / 간접경쟁 구분 분석
+- 공백 틈새 기회 요소 도출
+- [출처: 오픈업(openub.co.kr) 카드매출 데이터, 나이스비즈맵(nicebizmap.co.kr), 행안부 지방행정 인허가 데이터 2024]
+
+## 섹션 4. 손익분기점 시뮬레이션
+- 예상 월 고정비 산출 항목별 명세 → HTML 표
+- 손익분기 달성을 위한 일 매출 목표액 (계산식 명시)
+- 투자금 회수 시나리오 3단계: 낙관 / 보통 / 비관 → 색상 구분 표
+- [출처: 소상공인시장진흥공단 업종별 평균 비용구조 2024, 최저임금위원회 2025년 최저임금 10,030원 기준]
+
+## 섹션 5. 마케팅 전략 제안
+- 오픈 초기 3개월 집중 전략 (SNS, 로컬마케팅, 오픈 이벤트) → 타임라인 형식
+- 재방문율 확보 CRM 전략
+- 경쟁 차별화 포지셔닝 메시지 (한 문장 슬로건 포함)
+- [출처: 한국외식산업연구원 외식소비트렌드 2024, 소셜미디어 마케팅 벤치마크 2024]
+
+## 섹션 6. 리스크 요인 및 대응 방안
+- 주요 리스크 시나리오 3가지 이상 (임대료 인상 / 경쟁점 신규 입점 / 수요 감소 등)
+- 각 리스크별 조기 경고 신호 + 대응 전략 → 표 형식
+- [출처: 한국은행 금융안정보고서 2024, 국토교통부 상업용 부동산 임대동향조사 2024 Q3]
+
+## 섹션 7. 계약 단계 체크리스트 및 특약 권고
+- 임대차 계약 시 필수 특약 사항 5가지 → 체크리스트 스타일
+- 권리금 적정성 판단 기준 및 현 수준 평가
+- 계약 전 최종 확인 항목
+- [출처: 상가건물 임대차보호법(2023년 개정), 법무부 표준임대차계약서 양식, 대법원 판례 기준]
+
+## 섹션 8. 전문가 최종 의견
+- 종합 입지 점수 (100점 만점 / 항목별 배점) → 점수 게이지 바 HTML로 표현
+- "이 자리에서 망하는 시나리오" 핵심 원인 명시
+- 창업 최종 권고: ✅진행 권고 / ⚠️조건부 진행 / ❌진행 비권고 (색상 강조 박스)
+- 조건부 진행 시 선결 과제 목록
+
+## 참고 데이터 출처 (별도 섹션)
+보고서에서 인용한 모든 데이터 출처를 아래 형식으로 정리:
+• 기관명 | 자료명 | 기준연도/분기 | 접속 URL (가능한 경우)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+작성 규칙:
+• 모든 수치에 [출처] 또는 "(추정 - 근거: )" 표기 필수
+• 확인 불가 데이터는 절대 사실처럼 서술하지 말 것
+• 2024~2025년 최신 통계 기준으로 작성
+• HTML 코드만 출력 — 설명 텍스트, 마크다운 없이 완전한 HTML 파일만 출력
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+
+B: `당신은 GIS 분석 툴과 카드 데이터를 활용하는 실무형 B급 상권 컨설턴트입니다.
+아래 정보를 바탕으로 핵심 지표 중심의 실무 상권분석 보고서를 작성하세요.
+
+${infoBlock}
+${htmlFormatBlock}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[보고서 구성 — 아래 6개 섹션을 HTML로 작성]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 섹션 1. 입지 기본 평가
+- 상권 유형 및 특성 요약 (2~3줄)
+- 긍정 요인 3가지 / 부정 요인 3가지 → HTML 2열 표
+- 인근 핵심 앵커 시설 (역, 학교, 오피스, 대형시설 등)
+- [출처: 카카오맵 API 상권 데이터, 국토교통부 건축물 대장 2024, 통계청 상권통계 2023]
+
+## 섹션 2. 유동인구 데이터 분석
+- 타겟층 일평균 유효 유동인구 추정 (추정 근거 명시)
+- 시간대별 유동 패턴 (오전/점심/오후/저녁/심야) → HTML 막대 그래프 스타일
+- 요일별 패턴 차이 (평일 vs 주말)
+- [출처: 소상공인365 상권정보시스템 2024, SKT 지오비전 생활인구 데이터, KT 빅데이터 플랫폼]
+
+## 섹션 3. 경쟁사 현황 분석
+- 반경 300m / 500m 내 동일 업종 수 추정 → 표
+- 주요 경쟁점 추정 월 매출 범위 (카드 데이터 기준, 추정값 명시)
+- 상권 포화도 지수: 낮음 / 보통 / 높음 → 색상 배지로 표현
+- [출처: 오픈업(openub.co.kr) 2024 카드매출 통계, 나이스비즈맵 업종별 매출현황, 행안부 인허가 데이터]
+
+## 섹션 4. 임대료 적정성 검토
+- 제안 임대 조건의 시세 대비 수준 평가
+- 적정 임대료 상한선 산출 (기준: 예상 월 매출의 10~15% 이내, 계산식 표시)
+- 권리금 포함 총 초기비용 회수 가능성
+- [출처: 한국부동산원 R-ONE 상업용부동산 임대동향 2024 Q3, 부동산플래닛 실거래가 데이터, 국토부 실거래가 공개시스템]
+
+## 섹션 5. 손익분기 시뮬레이션
+- 예상 월 고정비 합계 (항목별 명세) → HTML 표
+- 손익분기 달성 필요 일 매출 (객단가 기반 산출, 계산식 명시)
+- 목표 달성 가능성 평가: 상 / 중 / 하 → 색상 게이지 바
+- 객단가별 필요 일 방문객 수 계산
+- [출처: 소상공인시장진흥공단 소상공인 실태조사 2024, 최저임금위원회 2025년 최저임금 10,030원]
+
+## 섹션 6. 창업 권고 및 선행 조건
+- 종합 창업 추천 지수 (10점 만점 / 항목별 점수) → 점수 카드
+- 최종 권고: ✅진행 / ⚠️조건부 / ❌비권고 → 강조 박스
+- 진행 시 필수 선행 조건 3가지
+- 추가 조사 권고 항목
+
+## 참고 데이터 출처 (별도 섹션)
+보고서에서 인용한 모든 데이터 출처를 아래 형식으로 정리:
+• 기관명 | 자료명 | 기준연도 | URL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+작성 규칙:
+• 간결하고 실무적으로 작성 (항목당 핵심만)
+• 수치는 반드시 범위값 + 출처 함께 표기
+• 추정치는 "(추정)" 반드시 표기
+• HTML 코드만 출력 — 설명 텍스트, 마크다운 없이 완전한 HTML 파일만 출력
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+
+C: `당신은 소상공인시장진흥공단 소속 상권분석 자문위원입니다.
+아래 정보를 바탕으로 초보 창업자도 이해할 수 있는 기초 상권분석 보고서를 작성하세요.
+
+${infoBlock}
+${htmlFormatBlock}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[보고서 구성 — 아래 6개 섹션을 HTML로 작성]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 섹션 1. 입지 기초 진단 체크리스트
+아래 5가지 항목을 평가하고 HTML 카드로 표현:
+판정: ✅좋음(녹색) / ⚠️보통(주황색) / ❌나쁨(빨간색) + 한 줄 이유
+- 가시성: 도로변 노출, 간판 인지 가능 여부
+- 접근성: 대중교통 거리, 주차 가능 여부
+- 배후 수요: 인근 주거/직장/학교 인구 규모
+- 경쟁 밀도: 동일 업종 과포화 여부
+- 성장성: 개발 호재, 유동인구 증가 트렌드
+[출처: 소상공인365 상권정보 2024, 국토부 도시계획 정보서비스 2024]
+
+## 섹션 2. 업종 적합성 평가
+- 이 상권에 해당 업종이 맞는가? → ✅/⚠️/❌ 큰 판정 배지
+- 판단 이유 3가지 (쉬운 말로, 전문용어 시 괄호 설명)
+- 이 상권에서 더 잘 맞을 수 있는 대안 업종 1~2개 제안
+[출처: 소상공인시장진흥공단 업종별 창업·폐업 현황 2024, 통계청 서비스업 조사 2023]
+
+## 섹션 3. 간이 손익 계산
+HTML 계산 카드 형식으로 표현:
+- 예상 월 지출 내역 (임대료 / 인건비 / 재료비 / 기타) → 합계 표시
+- 손익분기 달성을 위한 하루 최소 매출 (계산식 시각화)
+- 쉬운 설명: "하루에 몇 명의 손님이 와야 하는가?" (큰 숫자로 강조)
+- 창업비용 회수까지 예상 기간
+[출처: 최저임금위원회 2025년 최저임금 10,030원, 소상공인 실태조사 2024 업종별 원가율]
+
+## 섹션 4. 초보 창업자 주의사항 5가지
+번호 붙은 카드 형식으로 표현 (아이콘 이모지 포함):
+1. ⚖️ 권리금 판단 방법 (얼마가 적정한가)
+2. 📋 임대차 계약 시 꼭 넣어야 할 특약
+3. 🔍 오픈 전 반드시 해봐야 할 현장 조사
+4. 💰 숨겨진 추가 비용 항목
+5. 🚨 계약 후 취소가 어려운 상황 대비법
+[출처: 상가건물 임대차보호법 2023 개정, 법무부 표준계약서, 소상공인진흥공단 창업 가이드 2024]
+
+## 섹션 5. 무료로 쓸 수 있는 데이터 툴 3가지
+각 툴을 HTML 카드로 표현 (툴명 / URL / 활용법 / 이 창업 활용 포인트):
+1. 소상공인365 상권정보 (sg.sbiz.or.kr)
+2. 부동산플래닛 (www.bdsplanet.com)
+3. 서울시 우리마을가게 상권분석서비스 (golmok.seoul.go.kr) 또는 지역별 대응 서비스
+
+## 섹션 6. 최종 한 줄 결론
+"이 자리, 지금 바로 계약해도 될까요?"
+→ ✅/⚠️/❌ 판정을 큰 강조 박스로 표현
+→ 조건이 있다면 조건을 명확히 한 줄로
+
+## 참고 데이터 출처 (별도 섹션)
+사용한 모든 출처를 • 기관명 | 자료명 | 연도 형식으로 나열
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+작성 규칙:
+• 전문 용어 사용 시 반드시 괄호 안에 쉬운 설명
+• 숫자는 실생활 예시로 환산 (예: "월 300만원 = 하루 약 10만원")
+• 추정치는 반드시 "(추정)" 표기
+• HTML 코드만 출력 — 설명 텍스트, 마크다운 없이 완전한 HTML 파일만 출력
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+  };
+
+  return prompts[currentGrade];
+}
+
+function generatePrompt() {
+  generatedPrompt = buildPrompt();
+
+  const info = gradeInfo[currentGrade];
+  const biz = getVal('f-biz') || '(업종 미입력)';
+  const loc = getVal('f-loc') || '(지역 미입력)';
+
+  // Badge & meta
+  const badge = document.getElementById('r-badge');
+  badge.textContent = info.badgeLabel;
+  badge.className = `result-grade-badge ${info.badgeCls}`;
+
+  document.querySelector('#r-meta strong').textContent = `${biz} · ${loc}`;
+
+  // Code output with simple highlight
+  const codeEl = document.getElementById('code-output');
+  codeEl.innerHTML = highlight(generatedPrompt);
+
+  // Show result
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('result-area').style.display = 'flex';
+
+  switchTab('code');
+}
+
+function highlight(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(당신은[^\n]+)/g, '<span class="tok-header">$1</span>')
+    .replace(/(━+)/g, '<span class="tok-comment">$1</span>')
+    .replace(/(\[.+?\])/g, '<span class="tok-bracket">$1</span>')
+    .replace(/(## \d+\..+)/g, '<span class="tok-section">$1</span>')
+    .replace(/(작성 규칙:)/g, '<span class="tok-key">$1</span>')
+    .replace(/(✅|⚠️|❌)/g, '<span class="tok-check">$1</span>')
+    .replace(/(•.+)/g, '<span style="color:#b0b8c8">$1</span>')
+    .replace(/(업종\/아이템|희망 지역|예상 창업비용|임대 규모|타겟 고객|차별화 포인트|예상 객단가|임대차 현황|추가 조건)\s*:/g,
+      '<span class="tok-key">$1 :</span>');
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-code').style.display = tab === 'code' ? 'block' : 'none';
+  document.getElementById('tab-info').style.display  = tab === 'info'  ? 'block' : 'none';
+  document.querySelectorAll('.result-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'code') || (i === 1 && tab === 'info'));
+  });
+}
+
+function copyPrompt() {
+  if (!generatedPrompt) return;
+  navigator.clipboard.writeText(generatedPrompt).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 복사`;
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function resetAll() {
+  document.getElementById('empty-state').style.display = 'flex';
+  document.getElementById('result-area').style.display = 'none';
+  generatedPrompt = '';
+  ['f-biz','f-loc','f-budget','f-size','f-target','f-adv','f-price','f-lease','f-extra']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  selectGrade('A');
+}
+</script>
+</body>
+</html>

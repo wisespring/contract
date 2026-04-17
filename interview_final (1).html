@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상권분석 현장조사 질의목록 — Final v2</title>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #2d6a4f;
+    --accent-light: #e8f5e9;
+    --accent2: #1b4332;
+    --warn: #b45309;
+    --warn-light: #fffbeb;
+    --red: #991b1b;
+    --red-light: #fef2f2;
+    --star: #7c3aed;
+    --star-light: #ede9fe;
+    --border: #e5e7eb;
+    --border-light: #f3f4f6;
+    --text: #111827;
+    --text-sub: #6b7280;
+    --text-muted: #9ca3af;
+    --bg: #ffffff;
+    --bg-page: #f9fafb;
+    --bg-section: #f3f4f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: var(--bg-page); color: var(--text); line-height: 1.6; }
+
+  /* HEADER */
+  .page-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 40%;
+    background: rgba(255,255,255,0.03);
+  }
+  .header-label {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5); margin-bottom: 0.5rem;
+  }
+  .header-title { font-size: 26px; font-weight: 700; margin-bottom: 0.4rem; line-height: 1.3; }
+  .header-title em { font-style: normal; color: #86efac; }
+  .header-desc { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; line-height: 1.6; }
+  .header-meta {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    max-width: 600px;
+  }
+  .meta-item {
+    background: rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .meta-label { font-size: 10px; color: rgba(255,255,255,0.45); margin-bottom: 2px; }
+  .meta-input {
+    background: none; border: none; outline: none; border-bottom: 1px solid rgba(255,255,255,0.3);
+    color: #fff; font-size: 13px; width: 100%; padding: 2px 0;
+    font-family: inherit;
+  }
+  .meta-input::placeholder { color: rgba(255,255,255,0.3); }
+  .header-badges {
+    display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap;
+  }
+  .hbadge {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7);
+  }
+
+  /* TOOLBAR */
+  .toolbar {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .progress-wrap { display: flex; align-items: center; gap: 12px; }
+  .progress-bar {
+    width: 180px; height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; border-radius: 3px; }
+  .progress-text { font-size: 13px; color: var(--text-sub); }
+  .toolbar-btns { display: flex; gap: 8px; }
+  .tbtn {
+    font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text-sub);
+    font-family: inherit;
+  }
+  .tbtn:hover { background: var(--bg-section); }
+  .tbtn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tbtn-primary:hover { background: var(--accent2); }
+
+  /* TABS */
+  .tabs {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; gap: 0; overflow-x: auto;
+  }
+  .tab {
+    padding: 0.9rem 1.2rem; font-size: 13px; color: var(--text-sub);
+    border-bottom: 2px solid transparent; cursor: pointer;
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .tab .tab-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%; background: var(--bg-section);
+    font-size: 10px; margin-right: 5px; color: var(--text-sub);
+  }
+  .tab.active .tab-num { background: var(--accent-light); color: var(--accent2); }
+
+  /* CONTENT */
+  .content { padding: 2rem; max-width: 900px; }
+  .part { display: none; }
+  .part.active { display: block; }
+
+  /* SECTION */
+  .section {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 1.5rem; overflow: hidden;
+  }
+  .section-head {
+    padding: 1rem 1.25rem; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .section-icon { font-size: 20px; }
+  .section-info { flex: 1; }
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .section-en { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .section-count {
+    font-size: 11px; color: var(--text-muted); background: var(--bg-section);
+    padding: 3px 8px; border-radius: 10px;
+  }
+  .section-desc {
+    padding: 0.6rem 1.25rem 0;
+    font-size: 12px; color: var(--text-sub);
+    background: var(--bg-section);
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0.6rem;
+    font-style: italic;
+  }
+
+  /* SUB GROUP */
+  .sub-group { padding: 0.5rem 1.25rem 0; }
+  .sub-group-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--text-muted); text-transform: uppercase;
+    padding: 0.75rem 0 0.25rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: 0.25rem;
+  }
+  .sub-group-title:first-child { border-top: none; margin-top: 0; }
+
+  /* ITEM */
+  .item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 0.8rem 0; border-bottom: 1px solid var(--border-light);
+  }
+  .item:last-child { border-bottom: none; padding-bottom: 1rem; }
+  .item-check {
+    width: 20px; height: 20px; border-radius: 4px;
+    border: 1.5px solid var(--border); cursor: pointer;
+    flex-shrink: 0; margin-top: 2px; transition: all 0.15s;
+    background: var(--bg); appearance: none; -webkit-appearance: none;
+  }
+  .item-check:checked {
+    background: var(--accent); border-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23fff' d='M6.5 11.5L3 8l1-1 2.5 2.5 5-5 1 1z'/%3E%3C/svg%3E");
+    background-size: cover;
+  }
+  .item-body { flex: 1; }
+  .item-q {
+    font-size: 14px; color: var(--text); font-weight: 500; margin-bottom: 3px;
+  }
+  .item-hint {
+    font-size: 12px; color: var(--text-sub); line-height: 1.5;
+  }
+  .item-num {
+    font-size: 11px; color: var(--text-muted); min-width: 28px; margin-top: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* STAR ITEM */
+  .item.star .item-q { color: var(--star); }
+  .item.star .item-num { color: var(--star); }
+  .item.star .item-check { border-color: var(--star); }
+  .item.star .item-check:checked { background: var(--star); border-color: var(--star); }
+  .star-badge {
+    display: inline-block; font-size: 10px; background: var(--star-light);
+    color: var(--star); padding: 1px 6px; border-radius: 10px; margin-left: 6px;
+    font-weight: 600; vertical-align: middle;
+  }
+
+  /* MYSTERY SHOP */
+  .item.mystery { background: #fffbf0; }
+  .item.mystery .item-q { color: var(--warn); }
+  .mystery-badge {
+    display: inline-block; font-size: 10px; background: #fef3c7;
+    color: var(--warn); padding: 1px 6px; border-radius: 10px; margin-left: 6px;
+    font-weight: 600; vertical-align: middle;
+  }
+
+  /* NOTES */
+  .notes-wrap { padding: 1rem 1.25rem; }
+  .notes-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  .notes-area {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 13px; font-family: inherit;
+    color: var(--text); background: var(--bg-page); resize: vertical;
+    min-height: 80px;
+  }
+  .notes-area:focus { outline: none; border-color: var(--accent); }
+
+  /* CONCLUSION CARD */
+  .conclusion-card {
+    background: #f0fdf4; border: 1.5px solid #86efac;
+    border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0;
+  }
+  .conclusion-title { font-size: 13px; font-weight: 600; color: var(--accent2); margin-bottom: 8px; }
+  .verdict-btns { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .verdict-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: var(--bg); font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .verdict-btn.go { border-color: var(--accent); color: var(--accent2); }
+  .verdict-btn.cond { border-color: var(--warn); color: var(--warn); }
+  .verdict-btn.no { border-color: var(--red); color: var(--red); }
+  .verdict-btn.selected.go { background: var(--accent); color: #fff; }
+  .verdict-btn.selected.cond { background: var(--warn); color: #fff; }
+  .verdict-btn.selected.no { background: var(--red); color: #fff; }
+
+  /* FOOTER */
+  .page-footer {
+    text-align: center; padding: 2rem;
+    font-size: 12px; color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  @media print {
+    .toolbar, .tabs { display: none; }
+    .part { display: block !important; }
+    .item-check { border: 1.5px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-label">WISESPRING · 강다인 상권분석 · Field Survey Final v2</div>
+  <div class="header-title">상권분석 <em>현장조사</em><br>질의 목록</div>
+  <div class="header-desc">
+    5개 파트 · 출발 전 → 환경 → 고객 → 경쟁 → 상품<br>
+    ★ 표시는 보고서 결론에 직결되는 핵심 항목입니다
+  </div>
+  <div class="header-meta">
+    <div class="meta-item">
+      <div class="meta-label">의뢰 업종</div>
+      <input class="meta-input" placeholder="예: 고기구이, 카페" id="meta-industry">
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">조사 상권 / 주소</div>
+      <input class="meta-input" placeholder="예: 서울 마포구 홍대입구" id="meta-area">
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">조사 일시</div>
+      <input class="meta-input" type="datetime-local" id="meta-date" style="color:rgba(255,255,255,0.8)">
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">날씨 / 특이사항</div>
+      <input class="meta-input" placeholder="예: 맑음, 평일 오후 2시" id="meta-weather">
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">조사자 A (관찰·기록)</div>
+      <input class="meta-input" placeholder="이름" id="meta-a">
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">조사자 B (대화·쇼핑)</div>
+      <input class="meta-input" placeholder="이름" id="meta-b">
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="hbadge">5개 파트</span>
+    <span class="hbadge" id="total-badge">총 0항목</span>
+    <span class="hbadge" id="star-badge">★ 핵심 0항목</span>
+    <span class="hbadge" id="done-badge">완료 0항목</span>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <span class="progress-text" id="progress-text">0 / 0 완료</span>
+  </div>
+  <div class="toolbar-btns">
+    <button class="tbtn" onclick="checkAll()">전체 선택</button>
+    <button class="tbtn" onclick="resetAll()">초기화</button>
+    <button class="tbtn tbtn-primary" onclick="window.print()">인쇄 / Print</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-tab="p0"><span class="tab-num">0</span>출발 전</div>
+  <div class="tab" data-tab="p1"><span class="tab-num">1</span>환경</div>
+  <div class="tab" data-tab="p2"><span class="tab-num">2</span>고객</div>
+  <div class="tab" data-tab="p3"><span class="tab-num">3</span>경쟁</div>
+  <div class="tab" data-tab="p4"><span class="tab-num">4</span>상품</div>
+</div>
+
+<div class="content">
+
+<!-- PART 0 -->
+<div class="part active" id="p0">
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">📋</div>
+      <div class="section-info">
+        <div class="section-title">출발 전 준비</div>
+        <div class="section-en">Pre-departure Checklist</div>
+      </div>
+      <div class="section-count">6항목</div>
+    </div>
+    <div class="section-desc">현장에 가기 전 반드시 확인 — 준비가 조사의 질을 결정한다. 조사자 A·B가 함께 확인 후 출발.</div>
+    <div class="sub-group">
+      <div class="item">
+        <span class="item-num">0-1</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">의뢰 업종·희망 입지 주소·의뢰인의 핵심 고민 사전 숙지</div>
+          <div class="item-hint">현장에서 '왜 이걸 보는지'를 알고 가야 보인다 — 숙지 없이 가면 체크리스트만 채운다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">0-2</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">네이버지도·카카오맵으로 경쟁 업종 현황 및 상권 구조 사전 파악</div>
+          <div class="item-hint">지도에서 본 것과 현장이 다를 때 — 그 차이가 핵심 단서다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">0-3</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">방문 시간대 계획 — 상권이 열리는 시간 기준으로 오후 도착 원칙</div>
+          <div class="item-hint">오전 방문은 죽은 상권처럼 보인다 / 야간 상권이면 저녁 재방문 별도 계획 필수</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">0-4</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">미스터리 쇼핑 대상 점포 2~3곳 사전 선정 — 잘 되는 곳 + 부진한 곳</div>
+          <div class="item-hint">같은 업종·비슷한 위치인데 결과가 다른 두 곳을 고르는 것이 이상적</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">0-5</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">조사 장비 확인 — 녹음기(배터리·용량), 카메라, 계수기</div>
+          <div class="item-hint">녹음이 안 되면 인터뷰 전체가 날아간다 — 이중 녹음 권장</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">0-6</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">역할 분담 확인 — 조사자 A(관찰·기록) / 조사자 B(대화·미스터리 쇼핑)</div>
+          <div class="item-hint">두 명이 같은 것만 보면 반쪽짜리 조사다 — 구역과 역할을 나눠라</div>
+        </div>
+      </div>
+      <div class="notes-wrap">
+        <div class="notes-label">출발 전 메모</div>
+        <textarea class="notes-area" placeholder="특이사항, 의뢰인 추가 요청사항 등"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PART 1 -->
+<div class="part" id="p1">
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">🗺️</div>
+      <div class="section-info">
+        <div class="section-title">환경 — 이 상권은 어떤 곳인가</div>
+        <div class="section-en">PART 1 · Environment</div>
+      </div>
+      <div class="section-count">13항목</div>
+    </div>
+    <div class="section-desc">발로 돌아다니며 눈으로 확인. 조사자 A·B가 구역 나눠 동시에 체크 가능.</div>
+
+    <div class="sub-group">
+      <div class="sub-group-title">첫인상 · 기본 구조</div>
+      <div class="item star">
+        <span class="item-num">1-1</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">도착했을 때 첫 느낌 — 이 상권은 살아있는가, 죽어있는가<span class="star-badge">★</span></div>
+          <div class="item-hint">활기·공기·밀도·소리 — 데이터보다 이 첫인상이 가장 솔직하다. 말로 표현해라</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-2</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">사람들이 어디서 와서 어디로 가는가 — 보행 동선의 출발점과 목적지</div>
+          <div class="item-hint">이 흐름에 올라타는 위치가 좋은 자리다 / 흐름 밖 자리는 찾아오는 집만 된다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-3</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권을 먹여 살리는 핵심 시설이 무엇인가</div>
+          <div class="item-hint">대형마트·병원·공장·오피스·학교 등 앵커 시설 — 이게 없어지면 상권도 죽는다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-4</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">대중교통 접근성 — 버스·지하철 출구와의 거리, 실제 이동 동선</div>
+          <div class="item-hint">지도상 거리와 실제 체감 거리는 다르다 — 직접 걸어봐라</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-5</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">주차 환경 — 주차장 위치·규모, 불법주정차 여부, 차량 방문 비율 추정</div>
+          <div class="item-hint">업종에 따라 주차 여부가 매출을 좌우한다 — 특히 외식·서비스업</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-6</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">상권을 분절시키는 장애물이 있는가 — 대로·철길·고가·언덕 등</div>
+          <div class="item-hint">장애물 하나가 같은 상권을 완전히 다른 두 곳으로 만든다</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">상권 현황</div>
+      <div class="item">
+        <span class="item-num">1-7</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">공실이 어디에 얼마나 몰려 있는가 — 구역별 체크</div>
+          <div class="item-hint">공실 밀집 구역은 상권 경계 또는 죽은 자리의 신호다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">1-8</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">신규 오픈과 폐업 중 어느 쪽이 더 많은가 — 상권 방향성 판단<span class="star-badge">★</span></div>
+          <div class="item-hint">신규가 많으면 성장 또는 거품 / 폐업이 많으면 쇠퇴 또는 정리 중</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-9</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">야간에도 상권이 살아있는가, 낮에만 도는 상권인가</div>
+          <div class="item-hint">야간 매출이 필요한 업종이라면 야간 현장을 반드시 별도로 확인</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-10</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">향후 개발 호재 또는 악재 요인이 있는가</div>
+          <div class="item-hint">재개발·교통 인프라·대형시설 입점 예정 — 3년 뒤 이 상권이 지금과 같을 것인가</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">입점 건물 단위 생사 판별</div>
+      <div class="item star">
+        <span class="item-num">1-11</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">희망 입점 건물 안은 살아있는가 — 건물 내 공실 수·최근 폐업 업종 확인<span class="star-badge">★</span></div>
+          <div class="item-hint">상권이 살아있어도 그 건물만 계속 죽는 경우가 있다 — 한 바퀴면 답이 나온다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">1-12</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">인접 건물들과 비교했을 때 이 건물만 유독 공실이 많은가<span class="star-badge">★</span></div>
+          <div class="item-hint">건물주 조건(임대료 인상 이력, 관리 수준)이 임차인에게 불리한 요소인지 확인</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">1-13</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">희망 위치는 보행 동선에서 자연스럽게 눈에 들어오는가 — 가시성·코너 여부·점포 구조</div>
+          <div class="item-hint">찾아와야 하는 자리는 초보에게 위험하다 / 전면폭·층고가 업종에 맞는지도 확인</div>
+        </div>
+      </div>
+      <div class="notes-wrap">
+        <div class="notes-label">환경 메모</div>
+        <textarea class="notes-area" placeholder="첫인상 자유 기술, 예상과 달랐던 점, 현장에서 느낀 감각적 인상 등"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PART 2 -->
+<div class="part" id="p2">
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">👥</div>
+      <div class="section-info">
+        <div class="section-title">고객 — 여기 사람들은 어떻게 소비하는가</div>
+        <div class="section-en">PART 2 · Customer</div>
+      </div>
+      <div class="section-count">11항목</div>
+    </div>
+    <div class="section-desc">카페·식당 등 현지인이 모이는 곳에서 자연스러운 대화로 캐내는 항목 — 조사자 B 주도.</div>
+
+    <div class="sub-group">
+      <div class="sub-group-title">소비자 구성 · 소비 패턴</div>
+      <div class="item star">
+        <span class="item-num">2-1</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">여기 사람들은 주로 누구인가 — 직장인·거주민·유동객 비율 추정<span class="star-badge">★</span></div>
+          <div class="item-hint">소비 패턴의 뿌리가 여기서 결정된다 — 세 유형은 지갑을 여는 이유가 전혀 다르다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">2-2</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">주 연령대·성별 구성은 어떤가 — 눈으로 확인한 것 기준으로</div>
+          <div class="item-hint">통계가 아닌 현장 인상 기준. "30대 직장여성 중심" 같은 한 문장이면 충분하다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">2-3</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 동네 사람들이 지갑을 여는 이유가 무엇인가<span class="star-badge">★</span></div>
+          <div class="item-hint">편리함인가 / 가성비인가 / 분위기인가 — 소비 동기가 다르면 전략이 달라진다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">2-4</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권에서 손님들이 기꺼이 내는 1회 소비 금액대는<span class="star-badge">★</span></div>
+          <div class="item-hint">이 범위를 벗어난 가격은 어느 방향이든 리스크 — 싸도 문제, 비싸도 문제</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">2-5</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">주말과 평일이 완전히 다른 상권인가, 비슷한 상권인가</div>
+          <div class="item-hint">주말에 죽는 상권에서 주 6일 장사 계획은 처음부터 어긋난다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">2-6</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">점심·저녁·야간 유동인구 차이가 크게 나는가</div>
+          <div class="item-hint">피크 타임에 맞지 않는 업종은 빈 시간이 고정비를 잡아먹는다</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">정보 유통 구조 · 소비 심리</div>
+      <div class="item star">
+        <span class="item-num">2-7</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">새 가게가 생기면 직접 가보는가, 주변에 먼저 묻는가<span class="star-badge">★</span></div>
+          <div class="item-hint">구전이 강한 상권(노동자·직장인 밀집)은 오픈 첫 달이 전부다 — 첫 달 실수는 회복 안 된다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">2-8</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">소문이 퍼지는 주 채널은 무엇인가 — 직장 동료 구전 / 지역 단체방 / SNS 등</div>
+          <div class="item-hint">부정적 소문이 한번 퍼지면 회복 가능한 상권인가, 사실상 불가능한 상권인가</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">2-9</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">의뢰 업종을 이 상권 사람들이 얼마나 자주 이용하는가<span class="star-badge">★</span></div>
+          <div class="item-hint">주 2~3회 일상 소비인가 / 월 1회 이하 특별 소비인가 — 이게 매출 구조를 결정한다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">2-10</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권 소비자들이 지금 아쉬워하는 것 — 없어서 불편한 업종이나 서비스</div>
+          <div class="item-hint">이게 공백 업종 힌트다 — 직접 물어보면 가장 정확하다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">2-11</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권 소비자들이 절대 안 가는 유형의 가게가 있는가 — 이유는</div>
+          <div class="item-hint">가지 않는 이유 속에 이 상권의 소비 기준이 숨어있다</div>
+        </div>
+      </div>
+      <div class="notes-wrap">
+        <div class="notes-label">고객 메모</div>
+        <textarea class="notes-area" placeholder="현지인 대화 내용, 예상과 달랐던 소비 패턴 등"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PART 3 -->
+<div class="part" id="p3">
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">🔍</div>
+      <div class="section-info">
+        <div class="section-title">경쟁 — 잘 되는 집과 망하는 집은 왜 갈리는가</div>
+        <div class="section-en">PART 3 · Competition</div>
+      </div>
+      <div class="section-count">13항목</div>
+    </div>
+    <div class="section-desc">경쟁 점포 미스터리 쇼핑 + 폐업 점포 관찰 + 입지 비교 — 조사자 B 주도, A 외부 관찰 동시 진행.</div>
+
+    <div class="sub-group">
+      <div class="sub-group-title">잘 되는 점포 분석</div>
+      <div class="item star">
+        <span class="item-num">3-1</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권에서 제일 잘 되는 가게는 어디인가 — 왜 잘 되는가<span class="star-badge">★</span></div>
+          <div class="item-hint">상권이 살아있는데 잘 되는 집이 있다면 — 그 이유가 곧 이 상권의 생존 공식이다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">3-2</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">잘 되는 집과 안 되는 집의 차이가 입지인가, 운영인가, 사람인가<span class="star-badge">★</span></div>
+          <div class="item-hint">같은 상권·같은 업종에서 결과가 다르다면 — 상권 탓이 아니다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">3-3</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">잘 되는 점포의 운영 특이점 — 영업시간·응대·분위기·회전율</div>
+          <div class="item-hint">365일 약속 지키는 집이 이긴다 — 불규칙 영업은 단골을 경쟁자에게 넘긴다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">3-4</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권에서 오래 버티고 있는 점포들의 공통점은 무엇인가</div>
+          <div class="item-hint">생존자에게서 배우는 게 가장 빠르다 — 오래된 집에는 반드시 이유가 있다</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">미스터리 쇼핑 체크</div>
+      <div class="item mystery">
+        <span class="item-num">3-5</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">들어가기 전 가격이 밖에서 보였는가 — 메뉴판·가격표 공개 여부<span class="mystery-badge">쇼핑</span></div>
+          <div class="item-hint">가격 숨기는 가게는 소비자 신뢰를 처음부터 잃는다</div>
+        </div>
+      </div>
+      <div class="item mystery">
+        <span class="item-num">3-6</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">계산서에 예상 못한 추가 비용이 있었는가<span class="mystery-badge">쇼핑</span></div>
+          <div class="item-hint">테이블차지·반찬비·최소주문 강요 — 한 번 뒤통수 맞은 손님은 소문을 낸다</div>
+        </div>
+      </div>
+      <div class="item mystery">
+        <span class="item-num">3-7</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">공지된 영업시간에 실제로 열려있었는가<span class="mystery-badge">쇼핑</span></div>
+          <div class="item-hint">손님과의 약속이다 — 마이너스 나는 날도 문 열어야 단골이 생긴다</div>
+        </div>
+      </div>
+      <div class="item mystery">
+        <span class="item-num">3-8</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">응대 수준과 분위기 — 낯선 손님이 편하게 앉을 수 있는 공간인가<span class="mystery-badge">쇼핑</span></div>
+          <div class="item-hint">지인 중심 다방 분위기는 새 손님을 내쫓는다</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">폐업 분석 · 경쟁 구조</div>
+      <div class="item star">
+        <span class="item-num">3-9</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">폐업 점포가 몰린 자리가 있는가 — 자리 문제인가, 업종 문제인가<span class="star-badge">★</span></div>
+          <div class="item-hint">업종 바꿔도 계속 폐업하는 자리는 입지 자체가 죽은 것이다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">3-10</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">부진 점포의 공통 원인 — 입지적 약점인가, 운영 문제인가</div>
+          <div class="item-hint">후면·2층·가시성 불량 같은 입지 문제 vs 청결·인력·응대 같은 운영 문제를 구분</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">3-11</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">의뢰 업종의 경쟁 점포는 몇 개이며 이미 포화 상태인가</div>
+          <div class="item-hint">포화 상태라면 "더 싸고 더 좋아야만" 이길 수 있다 — 그게 현실적으로 가능한가</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">3-12</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">임대료 수준이 이 상권 매출 포텐셜 대비 적정한가</div>
+          <div class="item-hint">좋은 자리가 좋은 장사를 보장하지 않는다 — 고정비가 발목 잡는 사례가 많다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">3-13</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">의뢰 업종과 비슷해 보이지만 실제로는 전혀 다른 소비 카테고리가 있는가</div>
+          <div class="item-hint">고깃집이 잘 된다고 돈가스도 잘 될 거라는 착각 — 소비 맥락이 다르다</div>
+        </div>
+      </div>
+      <div class="notes-wrap">
+        <div class="notes-label">경쟁 메모</div>
+        <textarea class="notes-area" placeholder="미스터리 쇼핑 상세 내용, 특이점, 추가 관찰 사항 등"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PART 4 -->
+<div class="part" id="p4">
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">🎯</div>
+      <div class="section-info">
+        <div class="section-title">상품 — 이 업종이 이 상권에서 팔리는가</div>
+        <div class="section-en">PART 4 · Product Fit</div>
+      </div>
+      <div class="section-count">9항목</div>
+    </div>
+    <div class="section-desc">조사 마무리 단계 · 전문가가 하루를 종합해 답하는 핵심 인터뷰. 이 답이 보고서의 결론이 된다.</div>
+
+    <div class="sub-group">
+      <div class="sub-group-title">상권 종합 판단</div>
+      <div class="item star">
+        <span class="item-num">4-1</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권을 한 문장으로 정의한다면<span class="star-badge">★</span></div>
+          <div class="item-hint">전문가의 직관적 한 줄 요약 — 복잡한 분석보다 이 한 문장이 더 정확할 때가 많다</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">4-2</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">오늘 현장에서 예상과 가장 달랐던 점은 무엇인가</div>
+          <div class="item-hint">데이터와 현장이 다를 때 — 항상 현장이 맞다</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">소비 카테고리 적합성</div>
+      <div class="item star">
+        <span class="item-num">4-3</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">의뢰 업종이 이 상권 소비자에게 일상 소비인가, 특별 소비인가<span class="star-badge">★</span></div>
+          <div class="item-hint">월 1회 이하 특별 소비면 아무리 좋은 자리여도 매출 한계가 있다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">4-4</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">"인구수 × 단가" 계산으로 수요를 추정했을 때, 실제 소비 반경 대비 얼마나 현실적인가<span class="star-badge">★</span></div>
+          <div class="item-hint">노동자 수만 명 × 고급 단가 = 매출 기대 — 이 함정에 빠지면 오픈 한 달 만에 폐업한다</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">성공 조건 · 오픈 초기 전략</div>
+      <div class="item star">
+        <span class="item-num">4-5</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">이 상권에서 의뢰 업종이 성공하려면 반드시 갖춰야 할 조건 3가지<span class="star-badge">★</span></div>
+          <div class="item-hint">입지·운영·상품 각각에서 하나씩 — 추상적이면 안 된다, 구체적으로</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">4-6</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">오픈 첫 달에 절대 하면 안 되는 것은 무엇인가<span class="star-badge">★</span></div>
+          <div class="item-hint">가격 숨김·최소주문 강요·불규칙 영업·바가지 — 이 상권에서 첫 달 실수가 회복 불가능한 이유는</div>
+        </div>
+      </div>
+      <div class="item">
+        <span class="item-num">4-7</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">초기 투자 규모(권리금·인테리어)가 이 상권 매출 포텐셜 대비 과하지 않은가</div>
+          <div class="item-hint">손익분기점까지 현실적으로 몇 개월을 버텨야 하는지도 함께 추정</div>
+        </div>
+      </div>
+
+      <div class="sub-group-title">전문가 최종 판단</div>
+      <div class="item star">
+        <span class="item-num">4-8</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">만약 본인이 여기서 창업한다면 — 어떤 업종을, 어느 위치에서 하겠는가<span class="star-badge">★</span></div>
+          <div class="item-hint">전문가의 솔직한 답 한 마디 — 이게 보고서에서 가장 강력한 한 줄이 된다</div>
+        </div>
+      </div>
+      <div class="item star">
+        <span class="item-num">4-9</span>
+        <input type="checkbox" class="item-check">
+        <div class="item-body">
+          <div class="item-q">의뢰인에게 최종 한마디<span class="star-badge">★</span></div>
+          <div class="item-hint">들어가라 / 조건부 들어가라 / 하지 마라 — 이유와 함께 구체적으로</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 최종 결론 카드 -->
+  <div class="conclusion-card">
+    <div class="conclusion-title">최종 결론 — 전문가 판단</div>
+    <div class="verdict-btns">
+      <button class="verdict-btn go" onclick="selectVerdict(this, 'go')">✓ 들어가라</button>
+      <button class="verdict-btn cond" onclick="selectVerdict(this, 'cond')">△ 조건부 가능</button>
+      <button class="verdict-btn no" onclick="selectVerdict(this, 'no')">✕ 하지 마라</button>
+    </div>
+    <div class="notes-wrap" style="padding: 0;">
+      <div class="notes-label">판단 근거 요약</div>
+      <textarea class="notes-area" placeholder="결론의 이유와 핵심 근거를 3줄 이내로 요약" style="min-height: 100px;"></textarea>
+    </div>
+  </div>
+
+  <!-- 현장 특이점 -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">📝</div>
+      <div class="section-info">
+        <div class="section-title">현장 특이점 · 추가 메모</div>
+        <div class="section-en">Field Notes</div>
+      </div>
+    </div>
+    <div class="sub-group">
+      <div class="notes-wrap">
+        <textarea class="notes-area" placeholder="데이터로는 안 잡히는데 현장에서 느낀 감각적 인상, 추가 조사가 필요한 부분 등" style="min-height: 120px;"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<div class="page-footer">
+  WISESPRING · 강다인 상권분석 · Field Survey Final v2.0<br>
+  Commercial Area Analysis · Field Survey Checklist · Final Edition Ver. 2.0
+</div>
+
+<script>
+const checks = () => document.querySelectorAll('.item-check');
+const starChecks = () => document.querySelectorAll('.item.star .item-check');
+
+function updateProgress() {
+  const all = checks();
+  const done = [...all].filter(c => c.checked).length;
+  document.getElementById('progress-fill').style.width = all.length ? (done/all.length*100)+'%' : '0%';
+  document.getElementById('progress-text').innerText = done + ' / ' + all.length + ' 완료';
+  document.getElementById('total-badge').innerText = '총 ' + all.length + '항목';
+  document.getElementById('star-badge').innerText = '★ 핵심 ' + starChecks().length + '항목';
+  document.getElementById('done-badge').innerText = '완료 ' + done + '항목';
+}
+
+checks().forEach(c => c.addEventListener('change', updateProgress));
+updateProgress();
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.part').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(this.dataset.tab).classList.add('active');
+  });
+});
+
+function checkAll() {
+  checks().forEach(c => c.checked = true);
+  updateProgress();
+}
+
+function resetAll() {
+  if (!confirm('모든 체크를 초기화하시겠습니까?')) return;
+  checks().forEach(c => c.checked = false);
+  updateProgress();
+}
+
+function selectVerdict(btn, type) {
+  document.querySelectorAll('.verdict-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+</script>
+</body>
+</html>
